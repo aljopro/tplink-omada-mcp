@@ -1,3 +1,5 @@
+# NOTE: needs a CLAUDE_CODE_OAUTH_TOKEN repo secret. Without it this
+# workflow fails on every pull request. Add the secret, or delete this file.
 name: Claude Code Review
 
 on:
