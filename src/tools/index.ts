@@ -330,6 +330,35 @@ import { registerListWireguardPeersTool } from './listWireguardPeers.js';
 import { registerSearchDevicesTool } from './searchDevices.js';
 import { registerSetClientRateLimitTool } from './setClientRateLimit.js';
 import { registerGenericApiCallTool } from './genericApiCall.js';
+import { registerAdoptDeviceTool } from './adoptDevice.js';
+import { registerRebootDeviceTool } from './rebootDevice.js';
+import { registerSetDeviceLedTool } from './setDeviceLed.js';
+import { registerStartFirmwareUpgradeTool } from './startFirmwareUpgrade.js';
+import { registerBlockClientTool } from './blockClient.js';
+import { registerUnblockClientTool } from './unblockClient.js';
+import { registerReconnectClientTool } from './reconnectClient.js';
+import { registerUpdateClientTool } from './updateClient.js';
+import { registerSetGatewayWanConnectTool } from './setGatewayWanConnect.js';
+import { registerSetSwitchNetworksTool } from './setSwitchNetworks.js';
+import { registerSetSwitchPortNameTool } from './setSwitchPortName.js';
+import { registerSetSwitchPortPoeTool } from './setSwitchPortPoe.js';
+import { registerSetSwitchPortProfileTool } from './setSwitchPortProfile.js';
+import { registerSetSwitchPortProfileOverrideTool } from './setSwitchPortProfileOverride.js';
+import { registerSetSwitchPortStatusTool } from './setSwitchPortStatus.js';
+import { registerUpdateSwitchPortTool } from './updateSwitchPort.js';
+import { registerBatchSetSwitchPortNameTool } from './batchSetSwitchPortName.js';
+import { registerBatchSetSwitchPortPoeTool } from './batchSetSwitchPortPoe.js';
+import { registerBatchSetSwitchPortProfileTool } from './batchSetSwitchPortProfile.js';
+import { registerBatchSetSwitchPortStatusTool } from './batchSetSwitchPortStatus.js';
+import { registerStartCableTestTool } from './startCableTest.js';
+import { registerCreateLanNetworkTool } from './createLanNetwork.js';
+import { registerUpdateLanNetworkTool } from './updateLanNetwork.js';
+import { registerDeleteLanNetworkTool } from './deleteLanNetwork.js';
+import { registerCreateLanProfileTool } from './createLanProfile.js';
+import { registerUpdateLanProfileTool } from './updateLanProfile.js';
+import { registerCreateFirewallAclTool } from './createFirewallAcl.js';
+import { registerDeleteFirewallAclTool } from './deleteFirewallAcl.js';
+import { registerUpdateFirewallSettingTool } from './updateFirewallSetting.js';
 import { registerSetClientRateLimitProfileTool } from './setClientRateLimitProfile.js';
 
 // ---------------------------------------------------------------------------
@@ -433,6 +462,35 @@ const TOOL_REGISTRY: ToolEntry[] = [
     { fn: registerGetGridClientHistoryTool, category: 'clients', permission: 'read' },
     { fn: registerSetClientRateLimitTool, category: 'clients', permission: 'write' },
     { fn: registerGenericApiCallTool, category: 'generic', permission: 'write' },
+    { fn: registerAdoptDeviceTool, category: 'devices-general', permission: 'write' },
+    { fn: registerRebootDeviceTool, category: 'devices-general', permission: 'write' },
+    { fn: registerSetDeviceLedTool, category: 'devices-general', permission: 'write' },
+    { fn: registerStartFirmwareUpgradeTool, category: 'maintenance', permission: 'write' },
+    { fn: registerBlockClientTool, category: 'clients', permission: 'write' },
+    { fn: registerUnblockClientTool, category: 'clients', permission: 'write' },
+    { fn: registerReconnectClientTool, category: 'clients', permission: 'write' },
+    { fn: registerUpdateClientTool, category: 'clients', permission: 'write' },
+    { fn: registerSetGatewayWanConnectTool, category: 'devices-gateway', permission: 'write' },
+    { fn: registerSetSwitchNetworksTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerSetSwitchPortNameTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerSetSwitchPortPoeTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerSetSwitchPortProfileTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerSetSwitchPortProfileOverrideTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerSetSwitchPortStatusTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerUpdateSwitchPortTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerBatchSetSwitchPortNameTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerBatchSetSwitchPortPoeTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerBatchSetSwitchPortProfileTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerBatchSetSwitchPortStatusTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerStartCableTestTool, category: 'devices-switch', permission: 'write' },
+    { fn: registerCreateLanNetworkTool, category: 'network-lan', permission: 'write' },
+    { fn: registerUpdateLanNetworkTool, category: 'network-lan', permission: 'write' },
+    { fn: registerDeleteLanNetworkTool, category: 'network-lan', permission: 'write' },
+    { fn: registerCreateLanProfileTool, category: 'network-lan', permission: 'write' },
+    { fn: registerUpdateLanProfileTool, category: 'network-lan', permission: 'write' },
+    { fn: registerCreateFirewallAclTool, category: 'firewall-acl', permission: 'write' },
+    { fn: registerDeleteFirewallAclTool, category: 'firewall-acl', permission: 'write' },
+    { fn: registerUpdateFirewallSettingTool, category: 'firewall-acl', permission: 'write' },
     { fn: registerSetClientRateLimitProfileTool, category: 'clients', permission: 'write' },
     { fn: registerDisableClientRateLimitTool, category: 'clients', permission: 'write' },
 

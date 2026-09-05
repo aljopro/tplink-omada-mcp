@@ -27,8 +27,10 @@ import { AccountOperations } from './account.js';
 import { AuthManager } from './auth.js';
 import { ClientOperations } from './client.js';
 import { ControllerOperations } from './controller.js';
+import { ActionOperations } from './action.js';
 import { DeviceOperations } from './device.js';
 import { GenericOperations } from './generic.js';
+import { SwitchOperations } from './switch.js';
 import { InsightOperations, type SiteThreatListOptions } from './insight.js';
 import { LogOperations, type LogQueryOptions } from './log.js';
 import { MaintenanceOperations } from './maintenance.js';
@@ -59,6 +61,10 @@ export class OmadaClient {
     private readonly deviceOps: DeviceOperations;
 
     private readonly genericOps: GenericOperations;
+
+    private readonly actionOps: ActionOperations;
+
+    private readonly switchOps: SwitchOperations;
 
     private readonly clientOps: ClientOperations;
 
@@ -106,6 +112,8 @@ export class OmadaClient {
         this.siteOps = new SiteOperations(this.request, this.buildOmadaPath.bind(this), options.siteId);
         this.deviceOps = new DeviceOperations(this.request, this.siteOps, this.buildOmadaPath.bind(this));
         this.genericOps = new GenericOperations(this.request, this.buildOmadaPath.bind(this));
+        this.actionOps = new ActionOperations(this.request, this.siteOps, this.buildOmadaPath.bind(this));
+        this.switchOps = new SwitchOperations(this.request, this.siteOps, this.buildOmadaPath.bind(this));
         this.clientOps = new ClientOperations(this.request, this.siteOps, this.buildOmadaPath.bind(this));
         this.securityOps = new SecurityOperations(this.request, this.buildOmadaPath.bind(this));
         this.networkOps = new NetworkOperations(this.request, this.siteOps, this.buildOmadaPath.bind(this));
@@ -1448,6 +1456,123 @@ export class OmadaClient {
         queryParams?: Record<string, unknown>
     ): Promise<unknown> {
         return await this.genericOps.genericApiCall(method, path, version, body, queryParams);
+    }
+
+
+    public async adoptDevice(deviceMac: string, siteId?: string): Promise<unknown> {
+        return await this.actionOps.adoptDevice(deviceMac, siteId);
+    }
+
+    public async rebootDevice(deviceMac: string, siteId?: string): Promise<unknown> {
+        return await this.actionOps.rebootDevice(deviceMac, siteId);
+    }
+
+    public async setDeviceLed(deviceMac: string, ledSetting: number, siteId?: string): Promise<unknown> {
+        return await this.actionOps.setDeviceLed(deviceMac, ledSetting, siteId);
+    }
+
+    public async startFirmwareUpgrade(deviceMac: string, siteId?: string): Promise<unknown> {
+        return await this.actionOps.startFirmwareUpgrade(deviceMac, siteId);
+    }
+
+    public async blockClient(clientMac: string, siteId?: string): Promise<unknown> {
+        return await this.actionOps.blockClient(clientMac, siteId);
+    }
+
+    public async unblockClient(clientMac: string, siteId?: string): Promise<unknown> {
+        return await this.actionOps.unblockClient(clientMac, siteId);
+    }
+
+    public async reconnectClient(clientMac: string, siteId?: string): Promise<unknown> {
+        return await this.actionOps.reconnectClient(clientMac, siteId);
+    }
+
+    public async updateClient(clientMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.actionOps.updateClient(clientMac, data, siteId);
+    }
+
+    public async setGatewayWanConnect(gatewayMac: string, portId: string, action: 'connect' | 'disconnect', siteId?: string): Promise<unknown> {
+        return await this.actionOps.setGatewayWanConnect(gatewayMac, portId, action, siteId);
+    }
+
+    public async setSwitchNetworks(switchMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.switchOps.setSwitchNetworks(switchMac, data, siteId);
+    }
+
+    public async setSwitchPortName(switchMac: string, port: number, name: string, siteId?: string): Promise<unknown> {
+        return await this.switchOps.setSwitchPortName(switchMac, port, name, siteId);
+    }
+
+    public async setSwitchPortPoe(switchMac: string, port: number, poeMode: number, siteId?: string): Promise<unknown> {
+        return await this.switchOps.setSwitchPortPoe(switchMac, port, poeMode, siteId);
+    }
+
+    public async setSwitchPortProfile(switchMac: string, port: number, profileId: string, siteId?: string): Promise<unknown> {
+        return await this.switchOps.setSwitchPortProfile(switchMac, port, profileId, siteId);
+    }
+
+    public async setSwitchPortProfileOverride(switchMac: string, port: number, profileOverrideEnable: boolean, siteId?: string): Promise<unknown> {
+        return await this.switchOps.setSwitchPortProfileOverride(switchMac, port, profileOverrideEnable, siteId);
+    }
+
+    public async setSwitchPortStatus(switchMac: string, port: number, status: number, siteId?: string): Promise<unknown> {
+        return await this.switchOps.setSwitchPortStatus(switchMac, port, status, siteId);
+    }
+
+    public async updateSwitchPort(switchMac: string, portId: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.networkOps.updateSwitchPort(switchMac, portId, data, siteId);
+    }
+
+    public async batchSetSwitchPortName(switchMac: string, portNameList: Array<{ port: number; name: string }>, siteId?: string): Promise<unknown> {
+        return await this.switchOps.batchSetSwitchPortName(switchMac, portNameList, siteId);
+    }
+
+    public async batchSetSwitchPortPoe(switchMac: string, portList: number[], poeMode: number, siteId?: string): Promise<unknown> {
+        return await this.switchOps.batchSetSwitchPortPoe(switchMac, portList, poeMode, siteId);
+    }
+
+    public async batchSetSwitchPortProfile(switchMac: string, portList: number[], profileOverrideEnable: boolean, siteId?: string): Promise<unknown> {
+        return await this.switchOps.batchSetSwitchPortProfile(switchMac, portList, profileOverrideEnable, siteId);
+    }
+
+    public async batchSetSwitchPortStatus(switchMac: string, portList: number[], status: number, siteId?: string): Promise<unknown> {
+        return await this.switchOps.batchSetSwitchPortStatus(switchMac, portList, status, siteId);
+    }
+
+    public async startCableTest(switchMac: string, siteId?: string): Promise<unknown> {
+        return await this.switchOps.startCableTest(switchMac, siteId);
+    }
+
+    public async createLanNetwork(data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.networkOps.createLanNetwork(data, siteId);
+    }
+
+    public async updateLanNetwork(networkId: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.networkOps.updateLanNetwork(networkId, data, siteId);
+    }
+
+    public async deleteLanNetwork(networkId: string, siteId?: string): Promise<unknown> {
+        return await this.networkOps.deleteLanNetwork(networkId, siteId);
+    }
+
+    public async createLanProfile(data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.networkOps.createLanProfile(data, siteId);
+    }
+
+    public async updateLanProfile(profileId: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.networkOps.updateLanProfile(profileId, data, siteId);
+    }
+
+    public async createFirewallAcl(data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.networkOps.createFirewallAcl(data, siteId);
+    }
+
+    public async deleteFirewallAcl(aclId: string, siteId?: string): Promise<unknown> {
+        return await this.networkOps.deleteFirewallAcl(aclId, siteId);
+    }
+
+    public async updateFirewallSetting(data: Record<string, unknown>, siteId?: string): Promise<unknown> {
+        return await this.networkOps.updateFirewallSetting(data, siteId);
     }
 
     private buildOmadaPath(relativePath: string, version = 'v1'): string {

@@ -277,4 +277,28 @@ export class RequestHandler {
 
         return '********';
     }
+
+    /**
+     * Make a POST request to the Omada API.
+     * Added when porting realtydev's write tools, which use these helpers;
+     * upstream only exposed the generic request().
+     */
+    public async post<T>(path: string, data: unknown, params?: Record<string, unknown>): Promise<T> {
+        return await this.request<T>({ method: 'POST', url: path, data, params });
+    }
+
+    /**
+     * Make a PUT request to the Omada API.
+     */
+    public async put<T>(path: string, data: unknown, params?: Record<string, unknown>): Promise<T> {
+        return await this.request<T>({ method: 'PUT', url: path, data, params });
+    }
+
+    /**
+     * Make a DELETE request to the Omada API.
+     */
+    public async delete<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+        return await this.request<T>({ method: 'DELETE', url: path, params });
+    }
+
 }

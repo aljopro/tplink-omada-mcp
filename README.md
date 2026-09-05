@@ -6,7 +6,7 @@ This is [MiguelTVMS/tplink-omada-mcp](https://github.com/MiguelTVMS/tplink-omada
 `v0.15.0` with one addition: the **generic API escape hatch** ported from
 [realtydev/omada-mcp](https://github.com/realtydev/omada-mcp).
 
-**328 tools.** Everything upstream has, plus `genericApiCall`.
+**357 tools.** Everything upstream has, plus every write tool from realtydev.
 
 ---
 
@@ -18,7 +18,7 @@ Two useful forks of the same project had diverged, and neither had everything:
 |---|---|---|---|
 | `MiguelTVMS/tplink-omada-mcp` **0.15.0** | 327 | yes | no |
 | `realtydev/omada-mcp` **0.5.5** | 63 | **no** | yes, plus 29 typed write tools |
-| **this repo** | **328** | yes | yes |
+| **this repo** | **357** | yes | yes, all 30 |
 
 The realtydev fork branched at `0.5.5` and added write tools, but upstream moved on
 to `0.15.0` and added a large amount of read tooling the fork never got — the
@@ -148,18 +148,44 @@ follows the host regardless of what address it holds.
 
 ---
 
-## Not ported
+## What was ported, and what was not
 
-realtydev has **29 other typed write tools** — `updateClient`, `blockClient`,
-`rebootDevice`, `setSwitchPortPoe`, firewall and LAN CRUD and more — which are not
-here. They need their backing `*Operations` client methods ported too, and those
-areas diverged considerably more between `0.5.5` and `0.15.0` than the generic
-module did.
+All 30 of realtydev's write tools are here:
 
-`genericApiCall` reaches the same endpoints, just without the typed ergonomics.
-PRs welcome.
+| Area | Tools |
+|---|---|
+| Clients | `updateClient` (rename, static IP, rate limits), `blockClient`, `unblockClient`, `reconnectClient` |
+| Devices | `adoptDevice`, `rebootDevice`, `setDeviceLed`, `startFirmwareUpgrade` |
+| Switch ports | `setSwitchPortName` / `Poe` / `Profile` / `Status`, `setSwitchPortProfileOverride`, `updateSwitchPort`, `setSwitchNetworks`, four `batchSet*` variants, `startCableTest` |
+| Gateway | `setGatewayWanConnect` |
+| Network | `createLanNetwork`, `updateLanNetwork`, `deleteLanNetwork`, `createLanProfile`, `updateLanProfile` |
+| Firewall | `createFirewallAcl`, `deleteFirewallAcl`, `updateFirewallSetting` |
+| Escape hatch | `genericApiCall` |
 
----
+Two adaptations were needed:
+
+- Upstream's `RequestHandler` only exposed a generic `request()`. The ported code
+  calls `post` / `put` / `delete` helpers, so those were added as thin wrappers
+  around it.
+- realtydev's firewall ACL methods prefer an **internal web-UI API** (required for
+  ACL management on an OC200) and fall back to the Open API otherwise. That
+  subsystem — `internalAuth.ts`, `internalRequest.ts`, and the `webUsername` /
+  `webPassword` config — is **not** ported here, and those branches were removed so
+  the methods use the documented Open API path only. **If you manage ACLs on an
+  OC200, use realtydev's fork instead.**
+
+Upstream's test suite passes: **2,108 tests green across 358 files**. The only edits
+were tool-count assertions (327 → 357, and the clients write-tool count 3 → 7),
+which moved because tools were added.
+
+### A caution about write tools
+
+`OMADA_TOOL_CATEGORIES` defaults to read-only, and that is a sensible default. These
+tools reboot devices, change firewall rules, delete LAN networks and cut PoE to
+ports. If you expose this server over HTTP, remember that MCP has no authentication
+of its own — whatever can reach the port can drive your network. Enable write
+categories deliberately, and prefer an Open API account scoped to the least
+privilege that does the job.
 
 ## Credits and licence
 
