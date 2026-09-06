@@ -1467,8 +1467,8 @@ export class OmadaClient {
         return await this.actionOps.rebootDevice(deviceMac, siteId);
     }
 
-    public async setDeviceLed(deviceMac: string, ledSetting: number, siteId?: string): Promise<unknown> {
-        return await this.actionOps.setDeviceLed(deviceMac, ledSetting, siteId);
+    public async setSiteLed(enable: boolean, siteId?: string): Promise<unknown> {
+        return await this.actionOps.setSiteLed(enable, siteId);
     }
 
     public async startFirmwareUpgrade(deviceMac: string, siteId?: string): Promise<unknown> {
@@ -1491,9 +1491,7 @@ export class OmadaClient {
         return await this.actionOps.updateClient(clientMac, data, siteId);
     }
 
-    public async setGatewayWanConnect(gatewayMac: string, portId: string, action: 'connect' | 'disconnect', siteId?: string): Promise<unknown> {
-        return await this.actionOps.setGatewayWanConnect(gatewayMac, portId, action, siteId);
-    }
+
 
     public async setSwitchNetworks(switchMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         return await this.switchOps.setSwitchNetworks(switchMac, data, siteId);

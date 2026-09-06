@@ -140,12 +140,20 @@ export class ActionOperations {
     }
 
     /**
-     * Set device LED setting (v1 API).
+     * Enable or disable the status LEDs for a SITE.
+     *
+     * The Open API has no per-device LED endpoint - only PUT /sites/{siteId}/led,
+     * which applies to every device on the site. This method used to POST to
+     * /devices/{mac}/led-setting, a path that does not exist.
+     *
+     * For a single device, POST /sites/{siteId}/devices/{mac}/locate makes that
+     * device flash its LED to identify it, which is usually what is actually
+     * wanted - exposed separately if/when a locateDevice tool is added.
      */
-    public async setDeviceLed(deviceMac: string, ledSetting: number, siteId?: string): Promise<unknown> {
+    public async setSiteLed(enable: boolean, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
-        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/devices/${encodeURIComponent(deviceMac)}/led-setting`);
-        const response = await this.request.post<OmadaApiResponse<unknown>>(path, { ledSetting });
+        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/led`);
+        const response = await this.request.put<OmadaApiResponse<unknown>>(path, { enable });
         return this.request.ensureSuccess(response);
     }
 
@@ -164,20 +172,10 @@ export class ActionOperations {
      */
     public async startFirmwareUpgrade(deviceMac: string, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
-        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/devices/${encodeURIComponent(deviceMac)}/firmware/upgrade`);
+        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/devices/${encodeURIComponent(deviceMac)}/start-online-upgrade`);
         const response = await this.request.post<OmadaApiResponse<unknown>>(path, {});
         return this.request.ensureSuccess(response);
     }
 
-    /**
-     * Connect or disconnect a gateway WAN port (v1 API).
-     */
-    public async setGatewayWanConnect(gatewayMac: string, portId: string, action: 'connect' | 'disconnect', siteId?: string): Promise<unknown> {
-        const resolvedSiteId = this.site.resolveSiteId(siteId);
-        const path = this.buildPath(
-            `/sites/${encodeURIComponent(resolvedSiteId)}/gateways/${encodeURIComponent(gatewayMac)}/wan/${encodeURIComponent(portId)}/${action}`
-        );
-        const response = await this.request.post<OmadaApiResponse<unknown>>(path, {});
-        return this.request.ensureSuccess(response);
-    }
+
 }

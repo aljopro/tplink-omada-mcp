@@ -332,13 +332,12 @@ import { registerSetClientRateLimitTool } from './setClientRateLimit.js';
 import { registerGenericApiCallTool } from './genericApiCall.js';
 import { registerAdoptDeviceTool } from './adoptDevice.js';
 import { registerRebootDeviceTool } from './rebootDevice.js';
-import { registerSetDeviceLedTool } from './setDeviceLed.js';
+import { registerSetSiteLedTool } from './setSiteLed.js';
 import { registerStartFirmwareUpgradeTool } from './startFirmwareUpgrade.js';
 import { registerBlockClientTool } from './blockClient.js';
 import { registerUnblockClientTool } from './unblockClient.js';
 import { registerReconnectClientTool } from './reconnectClient.js';
 import { registerUpdateClientTool } from './updateClient.js';
-import { registerSetGatewayWanConnectTool } from './setGatewayWanConnect.js';
 import { registerSetSwitchNetworksTool } from './setSwitchNetworks.js';
 import { registerSetSwitchPortNameTool } from './setSwitchPortName.js';
 import { registerSetSwitchPortPoeTool } from './setSwitchPortPoe.js';
@@ -464,13 +463,12 @@ const TOOL_REGISTRY: ToolEntry[] = [
     { fn: registerGenericApiCallTool, category: 'generic', permission: 'write' },
     { fn: registerAdoptDeviceTool, category: 'devices-general', permission: 'write' },
     { fn: registerRebootDeviceTool, category: 'devices-general', permission: 'write' },
-    { fn: registerSetDeviceLedTool, category: 'devices-general', permission: 'write' },
+    { fn: registerSetSiteLedTool, category: 'sites', permission: 'write' },
     { fn: registerStartFirmwareUpgradeTool, category: 'maintenance', permission: 'write' },
     { fn: registerBlockClientTool, category: 'clients', permission: 'write' },
     { fn: registerUnblockClientTool, category: 'clients', permission: 'write' },
     { fn: registerReconnectClientTool, category: 'clients', permission: 'write' },
     { fn: registerUpdateClientTool, category: 'clients', permission: 'write' },
-    { fn: registerSetGatewayWanConnectTool, category: 'devices-gateway', permission: 'write' },
     { fn: registerSetSwitchNetworksTool, category: 'devices-switch', permission: 'write' },
     { fn: registerSetSwitchPortNameTool, category: 'devices-switch', permission: 'write' },
     { fn: registerSetSwitchPortPoeTool, category: 'devices-switch', permission: 'write' },
