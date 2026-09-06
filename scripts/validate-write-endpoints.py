@@ -14,8 +14,14 @@ import re
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # --- build the set of (METHOD, normalised path) the controller actually offers
+# Prefer the live spec pulled from a real controller - it carries ~640 more
+# paths than the bundled docs, which is why updateSwitchPort looked broken when
+# it was in fact correct. Refresh it with:
+#   curl -sk https://<controller>/v3/api-docs/00%20All -o docs/openapi-live/<name>.json
+SPEC_GLOBS = [f"{R}/docs/openapi-live/*.json", f"{R}/docs/openapi/*.json"]
+
 valid = set()
-for f in glob.glob(f"{R}/docs/openapi/*.json"):
+for f in [p for g in SPEC_GLOBS for p in glob.glob(g)]:
     try:
         d = json.load(open(f))
     except Exception:

@@ -27,10 +27,18 @@ export class ActionOperations {
     /**
      * Adopt a device by MAC address (v1 API).
      */
-    public async adoptDevice(deviceMac: string, siteId?: string): Promise<unknown> {
+    public async adoptDevice(
+        deviceMac: string,
+        siteId?: string,
+        credentials?: { username?: string; password?: string }
+    ): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
-        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/cmd/adopts`);
-        const response = await this.request.post<OmadaApiResponse<unknown>>(path, { macs: [deviceMac] });
+        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/devices/${encodeURIComponent(deviceMac)}/start-adopt`);
+        // AdoptDeviceRequest is { username?, password? } - the DEVICE account,
+        // needed when a device still holds a binding to a previous controller
+        // (the "Managed by Others" state). Not a macs array; the old code sent
+        // one to /cmd/adopts, a path that does not exist.
+        const response = await this.request.post<OmadaApiResponse<unknown>>(path, credentials ?? {});
         return this.request.ensureSuccess(response);
     }
 

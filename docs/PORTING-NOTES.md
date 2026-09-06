@@ -3,71 +3,69 @@
 Written 2026-09-05 while merging `realtydev/omada-mcp`'s write tools onto
 `MiguelTVMS/tplink-omada-mcp` 0.15.0. Read this before touching the write tools.
 
-## The headline: most ported write tools are unverified
+## Validating write endpoints
 
 `scripts/validate-write-endpoints.py` compares every write method's HTTP verb and
-path against the OpenAPI specs bundled in `docs/openapi/`. When first run:
-
-> **11 of 31 ported write methods called a verb or path the specs do not describe.**
-
-`updateClient` has been fixed, leaving **10**. Those are as inherited and should
-be treated as broken until proven otherwise. They register, they look live, and
-several will simply return `405 Method Not Allowed` when called.
-
-A caution about the tool itself: its first version reported 13, because it did
-not recognise `RequestHandler`'s `patch` helper and so flagged two *correct*
-upstream methods. If it reports something as broken, read the implementation
-before believing it.
-
-Run it after any change to the write tools:
+path against an OpenAPI spec. Run it after touching any write tool:
 
 ```bash
 python3 scripts/validate-write-endpoints.py
 ```
 
-### Known mismatches, as of 2026-09-05
+**Use the live spec, not the bundled docs.** A real controller serves its own
+OpenAPI at `/v3/api-docs`, and it is materially richer — 1,856 paths against the
+bundled 1,221. A copy from a 6.3.0.44 controller lives in
+`docs/openapi-live/`, and the validator reads it first. Refresh it with:
 
-Fixed:
+```bash
+curl -sk https://<controller>/v3/api-docs/swagger-config      # lists the groups
+curl -sk "https://<controller>/v3/api-docs/00%20All" -o docs/openapi-live/<name>.json
+```
+
+That difference is not academic: `updateSwitchPort` was reported broken against
+the bundled docs and is in fact correct — the endpoint simply is not in them.
+
+### Current state: 28 of 31 clean
+
+Fixed on 2026-09-05 against the live spec:
 
 | Method | Was | Now |
 |---|---|---|
-| `updateClient` | `PATCH /clients/{mac}` — spec has only GET, DELETE | routes per field: `PATCH /clients/{mac}/name`, `PATCH /clients/{mac}/ratelimit` |
+| `updateClient` | `PATCH /clients/{mac}` (spec: GET, DELETE only) | routes per field: `PATCH /clients/{mac}/name`, `PATCH /clients/{mac}/ratelimit` |
+| `updateFirewallSetting` | `PUT /sites/{}/firewall` | `PATCH`, same path |
+| `updateLanNetwork` | `PUT /sites/{}/lan-networks/{}` | `PATCH`, same path |
+| `updateLanProfile` | `PUT /sites/{}/lan-profiles/{}` | `PATCH`, same path |
+| `createFirewallAcl` | `POST /sites/{}/setting/firewall/acls` | `POST /sites/{}/acls/osg-acls` |
+| `deleteFirewallAcl` | `DELETE /sites/{}/setting/firewall/acls/{}` | `DELETE /sites/{}/acls/{aclId}` |
+| `adoptDevice` | `POST /sites/{}/cmd/adopts`, body `{macs:[...]}` | `POST /sites/{}/devices/{mac}/start-adopt`, body `{username?, password?}` |
 
-Still wrong — the spec lists a *different verb* on that exact path, so these are
-near-certainly broken:
+`adoptDevice` is worth reading twice: the body is the **device account**, which is
+what a device wants when it still holds a binding to a previous controller — the
+"Managed by Others" state. The old code sent a `macs` array to a path that does
+not exist.
 
-| Method | Calls | Spec has |
+### Three that remain, and why they need redesign not a URL fix
+
+| Method | Problem | Nearest real endpoint |
 |---|---|---|
-| `updateFirewallSetting` | `PUT /sites/{}/firewall` | `GET`, `PATCH` |
-| `updateLanNetwork` | `PUT /sites/{}/lan-networks/{}` | `DELETE`, `PATCH` |
-| `updateLanProfile` | `PUT /sites/{}/lan-profiles/{}` | `DELETE`, `PATCH` |
+| `setDeviceLed` | takes a device MAC, but LED control is **site-level** | `PUT /sites/{}/led` |
+| `startFirmwareUpgrade` | assumes one call per device; upgrades are plan-based | `POST /upgrade/overview/plans`, `POST /firmwares/{}/upgrade/plan` |
+| `setGatewayWanConnect` | no equivalent found | `PATCH /sites/{}/setting/wan-ports` |
 
-`updateSwitchPort` calls `PATCH /sites/{}/switches/{}/ports/{}`, a path the spec
-does not define at all. The per-attribute endpoints that *do* exist are already
-covered by `setSwitchPortName` / `Poe` / `Profile` / `Status` /
-`ProfileOverride`, all of which validate clean — prefer those.
+These are not typos — the tool's shape does not match how the API works. Changing
+the URL alone will not fix them.
 
-Path absent from the specs entirely. May still work (the bundled specs may be
-incomplete, and some of these look like internal or v2 endpoints), but nothing
-here confirms them:
+### ACL endpoints, for reference
 
-- `adoptDevice` — `POST /sites/{}/cmd/adopts`
-- `setDeviceLed` — `POST /sites/{}/devices/{}/led-setting`
-- `startFirmwareUpgrade` — `POST /sites/{}/devices/{}/firmware/upgrade`
-- `setGatewayWanConnect` — `POST /sites/{}/gateways/{}/wan/{}/{}`
-- `createFirewallAcl` — `POST /sites/{}/setting/firewall/acls`
-- `deleteFirewallAcl` — `DELETE /sites/{}/setting/firewall/acls/{}`
+ACLs are per-device-type, and deletion is generic:
 
-The two firewall ACL ones are worth singling out: `/setting/firewall/acls` is the
-**internal web-UI API** path, which upstream-of-upstream reached with separate
-credentials. That subsystem is not ported here (see README), so those two are
-likely to fail against the Open API regardless of verb.
-
-21 methods validate clean, including every `setSwitchPort*`, the `batchSet*`
-family, `blockClient`, `unblockClient`, `reconnectClient`, `rebootDevice`,
-`createLanNetwork`, `createLanProfile`, `deleteLanNetwork`, `startCableTest`,
-`setSwitchNetworks`, and upstream's `setClientRateLimit` /
-`setClientRateLimitProfile`.
+| | |
+|---|---|
+| gateway (firewall) | `POST /sites/{}/acls/osg-acls`, `PUT /sites/{}/acls/osg-acls/{}` |
+| switch | `POST /sites/{}/acls/osw-acls` |
+| EAP | `POST /sites/{}/acls/eap-acls` |
+| delete any | `DELETE /sites/{}/acls/{aclId}` |
+| custom gateway | `PATCH /sites/{}/acls/osg-custom-acls` |
 
 ## Why this happened
 
@@ -78,8 +76,14 @@ worked. When porting them here, the code compiled and the tools registered, so
 everything *looked* fine. TypeScript cannot catch a wrong URL.
 
 **The lesson worth keeping: for this API, "it builds and registers" says nothing
-about whether it works.** Validate against the specs, then against a live
+about whether it works.** Validate against the live spec, then against a live
 controller.
+
+Two ways this bit during the port itself. The validator's first version reported
+13 mismatches rather than 11, because it did not recognise `RequestHandler`'s
+`patch` helper and flagged two correct upstream methods. And validating against
+the bundled docs condemned `updateSwitchPort`, which was fine. **A tool that says
+something is broken deserves the same scepticism as code that says it works.**
 
 ## There is no single "update client" endpoint
 

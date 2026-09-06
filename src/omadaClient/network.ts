@@ -1594,7 +1594,7 @@ export class NetworkOperations {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
 
 
-        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/setting/firewall/acls`);
+        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/acls/osg-acls`);
         const response = await this.request.post<OmadaApiResponse<unknown>>(path, data);
         return this.request.ensureSuccess(response);
     }
@@ -1631,7 +1631,7 @@ export class NetworkOperations {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
 
 
-        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/setting/firewall/acls/${encodeURIComponent(aclId)}`);
+        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/acls/${encodeURIComponent(aclId)}`);
         const response = await this.request.delete<OmadaApiResponse<unknown>>(path);
         return this.request.ensureSuccess(response);
     }
@@ -1654,7 +1654,7 @@ export class NetworkOperations {
     public async updateFirewallSetting(data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
         const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/firewall`);
-        const response = await this.request.put<OmadaApiResponse<unknown>>(path, data);
+        const response = await this.request.patch<OmadaApiResponse<unknown>>(path, data);
         return this.request.ensureSuccess(response);
     }
 
@@ -1665,7 +1665,7 @@ export class NetworkOperations {
     public async updateLanNetwork(networkId: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
         const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/lan-networks/${encodeURIComponent(networkId)}`, 'v2');
-        const response = await this.request.put<OmadaApiResponse<unknown>>(path, data);
+        const response = await this.request.patch<OmadaApiResponse<unknown>>(path, data);
         return this.request.ensureSuccess(response);
     }
 
@@ -1676,7 +1676,7 @@ export class NetworkOperations {
     public async updateLanProfile(profileId: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
         const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/lan-profiles/${encodeURIComponent(profileId)}`);
-        const response = await this.request.put<OmadaApiResponse<unknown>>(path, data);
+        const response = await this.request.patch<OmadaApiResponse<unknown>>(path, data);
         return this.request.ensureSuccess(response);
     }
 
