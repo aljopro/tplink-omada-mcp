@@ -69,9 +69,66 @@ export class ActionOperations {
      */
     public async updateClient(clientMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
-        const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/clients/${encodeURIComponent(clientMac)}`);
-        const response = await this.request.request<OmadaApiResponse<unknown>>({ method: 'PATCH', url: path, data });
-        return this.request.ensureSuccess(response);
+        const results: Record<string, unknown> = {};
+
+        // The Omada Open API has no single "update client" endpoint. Each
+        // attribute has its own, and the path this method used to PATCH
+        // (/clients/{mac}) only supports GET and DELETE - so every call
+        // returned 405 Method Not Allowed. Verified against the bundled
+        // OpenAPI specs in docs/openapi/.
+        const { name, rateLimitEnable, upLimit, downLimit, ...rest } = data as {
+            name?: string;
+            rateLimitEnable?: boolean;
+            upLimit?: number;
+            downLimit?: number;
+            [k: string]: unknown;
+        };
+
+        if (name !== undefined) {
+            // PATCH /sites/{siteId}/clients/{clientMac}/name  body: { name }
+            // Name must be 1-128 chars, must not start with space + - @ = and
+            // must not end with a space.
+            const path = this.buildPath(
+                `/sites/${encodeURIComponent(resolvedSiteId)}/clients/${encodeURIComponent(clientMac)}/name`
+            );
+            const response = await this.request.request<OmadaApiResponse<unknown>>({
+                method: 'PATCH',
+                url: path,
+                data: { name },
+            });
+            results.name = this.request.ensureSuccess(response);
+        }
+
+        if (rateLimitEnable !== undefined || upLimit !== undefined || downLimit !== undefined) {
+            // PATCH /sites/{siteId}/clients/{clientMac}/ratelimit
+            const path = this.buildPath(
+                `/sites/${encodeURIComponent(resolvedSiteId)}/clients/${encodeURIComponent(clientMac)}/ratelimit`
+            );
+            const response = await this.request.request<OmadaApiResponse<unknown>>({
+                method: 'PATCH',
+                url: path,
+                data: { rateLimitEnable, upLimit, downLimit },
+            });
+            results.rateLimit = this.request.ensureSuccess(response);
+        }
+
+        const unsupported = Object.keys(rest);
+        if (unsupported.length > 0) {
+            // Fail loudly rather than silently dropping the field. fixedIp in
+            // particular has no per-client Open API endpoint; use the batch
+            // POST /sites/{siteId}/clients/config, or genericApiCall.
+            throw new Error(
+                `updateClient cannot set ${unsupported.join(', ')} via the Open API. ` +
+                    `Only name and rate-limit fields have per-client endpoints. ` +
+                    `Use genericApiCall or the batch clients/config endpoint for the rest.`
+            );
+        }
+
+        if (Object.keys(results).length === 0) {
+            throw new Error('updateClient called with nothing to change.');
+        }
+
+        return results;
     }
 
     /**
