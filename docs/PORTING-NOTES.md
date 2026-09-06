@@ -95,6 +95,48 @@ Each attribute has its own:
 Name constraints from the spec: 1–128 characters, must not begin with a space,
 `+`, `-`, `@` or `=`, and must not end with a space.
 
+## The internal web API — a second, separate auth stack
+
+The controller has two APIs, and this server speaks only one of them.
+
+| | Open API (what we use) | Internal web API |
+|---|---|---|
+| Path | `/openapi/v1/{omadacId}/...` | `/{omadacId}/api/v2/...` |
+| Auth | OAuth client credentials, `Authorization: AccessToken=` | session cookie `TPOMADA_SESSIONID` + `Csrf-Token` |
+| Login | `POST /openapi/authorize/token` | `POST /{omadacId}/api/v2/login` |
+
+**An Open API token cannot reach `/api/v2`.** Tested 2026-09-05: `AccessToken`,
+`Csrf-Token` and `Bearer` headers all return **HTTP 302 to
+`/{omadacId}/login`** — identical to sending no credentials at all. The internal
+API simply does not see OAuth tokens. Do not spend time on this again.
+
+### What only the internal API can do
+
+- **Set a client's Type, Vendor and Model.** The Edit Client dialog sends
+  `PATCH /{omadacId}/api/v2/sites/{siteId}/clients/{mac}` with
+  `{"name": "...", "clientInfoCorrection": {"type": "...", "vendor": "...", "model": "..."}}`.
+  The Open API's `/clients/{mac}/name` accepts `name` only — `clientInfoCorrection`
+  has no Open API equivalent, so those three fields are UI-only from here.
+- **Firewall ACL create/delete on an OC200**, which is why `createFirewallAcl` and
+  `deleteFirewallAcl` target `/setting/firewall/acls` in realtydev's fork.
+
+Note the historical footnote: the fork's original `updateClient` PATCHed
+`/sites/{siteId}/clients/{mac}` — the **internal** path — while sending it through
+the Open API request handler. It was not a typo; it was the right URL on the wrong
+API, which is why it could only ever return 405.
+
+### If you port it
+
+`realtydev/omada-mcp` has the machinery already (`internalAuth.ts`,
+`internalRequest.ts`, plus `webUsername` / `webPassword` config). It is MIT and
+structurally compatible.
+
+**Understand the cost before you do.** The internal API authenticates with a real
+controller username and password, not a scoped OAuth client. If this server is
+exposed over HTTP without authentication — as MCP servers commonly are — that
+credential is reachable by anything that can reach the port. A Viewer OAuth
+credential leaks your topology; a controller login leaks your network.
+
 ## Auth facts
 
 From TP-Link's Open API guide:
