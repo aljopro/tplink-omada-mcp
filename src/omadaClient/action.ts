@@ -75,6 +75,37 @@ export class ActionOperations {
     /**
      * Update a client's settings (v1 API).
      */
+
+    /**
+     * Set (or clear) a client's fixed IP reservation.
+     *
+     * PATCH /network/sites/{siteId}/cmd/clients/{clientMac}/update-ipSetting
+     * Note the /network prefix before /sites - unlike every other client
+     * endpoint, which sit directly under /sites.
+     *
+     * useFixedAddr is the only required field. Pass false to release a
+     * reservation; pass true with an ip to create one.
+     */
+    public async setClientIpSetting(
+        clientMac: string,
+        setting: {
+            useFixedAddr: boolean;
+            ip?: string;
+            netId?: string;
+            serverMac?: string;
+            serverStackId?: string;
+            serverType?: string;
+        },
+        siteId?: string
+    ): Promise<unknown> {
+        const resolvedSiteId = this.site.resolveSiteId(siteId);
+        const path = this.buildPath(
+            `/network/sites/${encodeURIComponent(resolvedSiteId)}/cmd/clients/${encodeURIComponent(clientMac)}/update-ipSetting`
+        );
+        const response = await this.request.patch<OmadaApiResponse<unknown>>(path, setting);
+        return this.request.ensureSuccess(response);
+    }
+
     public async updateClient(clientMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
         const results: Record<string, unknown> = {};
@@ -84,11 +115,13 @@ export class ActionOperations {
         // (/clients/{mac}) only supports GET and DELETE - so every call
         // returned 405 Method Not Allowed. Verified against the bundled
         // OpenAPI specs in docs/openapi/.
-        const { name, rateLimitEnable, upLimit, downLimit, ...rest } = data as {
+        const { name, rateLimitEnable, upLimit, downLimit, fixedIp, useFixedAddr, ...rest } = data as {
             name?: string;
             rateLimitEnable?: boolean;
             upLimit?: number;
             downLimit?: number;
+            fixedIp?: string;
+            useFixedAddr?: boolean;
             [k: string]: unknown;
         };
 
@@ -120,14 +153,25 @@ export class ActionOperations {
             results.rateLimit = this.request.ensureSuccess(response);
         }
 
+        if (fixedIp !== undefined || useFixedAddr !== undefined) {
+            // Static DHCP reservation. fixedIp implies useFixedAddr: true;
+            // pass useFixedAddr: false explicitly to release one.
+            results.ipSetting = await this.setClientIpSetting(
+                clientMac,
+                {
+                    useFixedAddr: useFixedAddr ?? fixedIp !== undefined,
+                    ...(fixedIp !== undefined ? { ip: fixedIp } : {}),
+                },
+                siteId
+            );
+        }
+
         const unsupported = Object.keys(rest);
         if (unsupported.length > 0) {
-            // Fail loudly rather than silently dropping the field. fixedIp in
-            // particular has no per-client Open API endpoint; use the batch
-            // POST /sites/{siteId}/clients/config, or genericApiCall.
+            // Fail loudly rather than silently dropping the field.
             throw new Error(
                 `updateClient cannot set ${unsupported.join(', ')} via the Open API. ` +
-                    `Only name and rate-limit fields have per-client endpoints. ` +
+                    `Only name, rate-limit and fixed-IP fields have per-client endpoints. ` +
                     `Use genericApiCall or the batch clients/config endpoint for the rest.`
             );
         }

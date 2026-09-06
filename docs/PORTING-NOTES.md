@@ -8,11 +8,11 @@ Written 2026-09-05 while merging `realtydev/omada-mcp`'s write tools onto
 `scripts/validate-write-endpoints.py` compares every write method's HTTP verb and
 path against the OpenAPI specs bundled in `docs/openapi/`. When first run:
 
-> **11 of 31 ported write methods called a verb or path the API does not expose.**
+> **11 of 31 ported write methods called a verb or path the specs do not describe.**
 
-All are now resolved — nine fixed, one removed as impossible, and one
-(`updateSwitchPort`) found to have been correct all along. The validator reports
-zero mismatches. Re-run it after any change to the write tools.
+`updateClient` has been fixed, leaving **10**. Those are as inherited and should
+be treated as broken until proven otherwise. They register, they look live, and
+several will simply return `405 Method Not Allowed` when called.
 
 A caution about the tool itself: its first version reported 13, because it did
 not recognise `RequestHandler`'s `patch` helper and so flagged two *correct*
@@ -90,7 +90,7 @@ Each attribute has its own:
 | `name` | `PATCH /sites/{siteId}/clients/{clientMac}/name` — body `{"name": "..."}` |
 | rate limits | `PATCH /sites/{siteId}/clients/{clientMac}/ratelimit` |
 | several at once | `POST /sites/{siteId}/clients/config` — batch, no MAC in the path |
-| `fixedIp` | no per-client endpoint found; use the batch config or `genericApiCall` |
+| `fixedIp` | `PATCH /network/sites/{siteId}/cmd/clients/{clientMac}/update-ipSetting` — note the `/network` prefix, unlike every other client endpoint. Required field is `useFixedAddr`; pass `false` to release a reservation |
 
 Name constraints from the spec: 1–128 characters, must not begin with a space,
 `+`, `-`, `@` or `=`, and must not end with a space.
@@ -129,25 +129,4 @@ wrong image being deployed, and was misdiagnosed that way twice.
 
 **Two source trees drift.** This repo was edited both on a build host and on a
 laptop; an `rsync` from the build host silently reverted CI changes made on the
-laptop. If you build somewhere other than where you commit, mirror deliberately.### All write methods now validate — the last three, and what they needed
-
-| Method | Problem | Resolution |
-|---|---|---|
-| `startFirmwareUpgrade` | posted to `/devices/{mac}/firmware/upgrade`, which does not exist | `POST /sites/{}/devices/{mac}/start-online-upgrade` |
-| `setDeviceLed` | took a device MAC, but **there is no per-device LED endpoint** | replaced by `setSiteLed` → `PUT /sites/{}/led`, body `{enable}` |
-| `setGatewayWanConnect` | no Open API equivalent exists at all | **removed** |
-
-`setDeviceLed` is worth understanding rather than papering over. The only LED
-endpoints are `PUT /sites/{siteId}/led` and the site-template equivalent, both
-site-wide. A tool named `setDeviceLed` that silently changed every device on the
-site would be a trap, so it became `setSiteLed` and says so. If you want to
-identify one device, `POST /sites/{siteId}/devices/{mac}/locate` makes it flash —
-not currently exposed as a tool, and a good first contribution.
-
-`setGatewayWanConnect` was removed rather than left throwing. The web UI can
-connect/disconnect a WAN port; the Open API cannot. The nearest endpoint,
-`PATCH /sites/{}/setting/wan-ports`, configures how many WAN ports exist and
-whether they are enabled — a different operation. A tool that can never succeed
-is worse than no tool, because it looks available.
-
-
+laptop. If you build somewhere other than where you commit, mirror deliberately.

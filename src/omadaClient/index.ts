@@ -1487,6 +1487,14 @@ export class OmadaClient {
         return await this.actionOps.reconnectClient(clientMac, siteId);
     }
 
+    public async setClientIpSetting(
+        clientMac: string,
+        setting: { useFixedAddr: boolean; ip?: string; netId?: string; serverMac?: string; serverStackId?: string; serverType?: string },
+        siteId?: string
+    ): Promise<unknown> {
+        return await this.actionOps.setClientIpSetting(clientMac, setting, siteId);
+    }
+
     public async updateClient(clientMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         return await this.actionOps.updateClient(clientMac, data, siteId);
     }
