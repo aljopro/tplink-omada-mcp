@@ -106,4 +106,41 @@ describe('server/http helpers', () => {
             errorSpy.mockRestore();
         });
     });
+
+    // CodeQL js/remote-property-injection, high, on an endpoint that accepts
+    // unauthenticated input. With a plain {} accumulator, a key named
+    // __proto__ reaches the inherited setter: the object's prototype changes
+    // and the value never lands as a property, so it vanishes from the log.
+    describe('prototype-pollution resistance', () => {
+        it('should record a __proto__ key as an ordinary property in a payload', () => {
+            const payload = JSON.parse('{"__proto__":{"polluted":true},"method":"tools/list"}');
+
+            const result = sanitizePayload(payload) as Record<string, unknown>;
+
+            expect(Object.hasOwn(result, '__proto__')).toBe(true);
+            expect(result.method).toBe('tools/list');
+        });
+
+        it('should not pollute Object.prototype from a payload', () => {
+            sanitizePayload(JSON.parse('{"__proto__":{"polluted":true}}'));
+
+            expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        });
+
+        it('should record a __proto__ header name as an ordinary property', () => {
+            const result = sanitizeHeaders(JSON.parse('{"__proto__":"x","accept":"application/json"}')) as Record<string, unknown>;
+
+            expect(Object.hasOwn(result, '__proto__')).toBe(true);
+            expect(result.accept).toBe('application/json');
+        });
+
+        it('should still mask sensitive keys nested under a __proto__ key', () => {
+            const result = sanitizePayload(JSON.parse('{"__proto__":{"authorization":"AccessToken=abc123"}}')) as Record<
+                string,
+                Record<string, unknown>
+            >;
+
+            expect(JSON.stringify(result)).not.toContain('abc123');
+        });
+    });
 });

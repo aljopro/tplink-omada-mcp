@@ -35,7 +35,12 @@ function sendJson(res: ServerResponse, statusCode: number, body: unknown): void 
 }
 
 function sanitizeHeaders(headers: IncomingHttpHeaders): Record<string, unknown> {
-    const sanitized: Record<string, unknown> = {};
+    // Object.create(null), not {}: keys come from the request. Assigning a key
+    // named __proto__ to a normal object hits the inherited setter - it changes
+    // the object's prototype and silently discards the value instead of
+    // recording it. A null-prototype accumulator has no such setter, so the key
+    // becomes an ordinary own property and the log stays faithful.
+    const sanitized: Record<string, unknown> = Object.create(null);
 
     for (const [key, value] of Object.entries(headers)) {
         if (value === undefined) {
@@ -71,7 +76,10 @@ function sanitizePayload(payload: unknown): unknown {
     }
 
     if (typeof payload === 'object') {
-        const sanitized: Record<string, unknown> = {};
+        // Object.create(null) for the same reason as sanitizeHeaders: these keys
+        // come from a request body on an endpoint that takes unauthenticated
+        // input.
+        const sanitized: Record<string, unknown> = Object.create(null);
         for (const [key, value] of Object.entries(payload)) {
             sanitized[key] = isSensitiveKey(key) ? maskValue(value) : sanitizePayload(value);
         }

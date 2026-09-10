@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initLogger, logger } from '../../src/utils/logger.ts';
 
