@@ -24,13 +24,12 @@ import type {
 } from '../types/index.js';
 
 import { AccountOperations } from './account.js';
+import { ActionOperations } from './action.js';
 import { AuthManager } from './auth.js';
 import { ClientOperations } from './client.js';
 import { ControllerOperations } from './controller.js';
-import { ActionOperations } from './action.js';
 import { DeviceOperations } from './device.js';
 import { GenericOperations } from './generic.js';
-import { SwitchOperations } from './switch.js';
 import { InsightOperations, type SiteThreatListOptions } from './insight.js';
 import { LogOperations, type LogQueryOptions } from './log.js';
 import { MaintenanceOperations } from './maintenance.js';
@@ -40,6 +39,7 @@ import { RequestHandler } from './request.js';
 import { ScheduleOperations } from './schedules.js';
 import { SecurityOperations } from './security.js';
 import { SiteOperations } from './site.js';
+import { SwitchOperations } from './switch.js';
 
 export type { LogQueryOptions, SiteThreatListOptions };
 
@@ -1458,7 +1458,6 @@ export class OmadaClient {
         return await this.genericOps.genericApiCall(method, path, version, body, queryParams);
     }
 
-
     public async adoptDevice(deviceMac: string, siteId?: string): Promise<unknown> {
         return await this.actionOps.adoptDevice(deviceMac, siteId);
     }
@@ -1498,8 +1497,6 @@ export class OmadaClient {
     public async updateClient(clientMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         return await this.actionOps.updateClient(clientMac, data, siteId);
     }
-
-
 
     public async setSwitchNetworks(switchMac: string, data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         return await this.switchOps.setSwitchNetworks(switchMac, data, siteId);
