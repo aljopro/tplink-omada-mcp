@@ -1593,12 +1593,10 @@ export class NetworkOperations {
     public async createFirewallAcl(data: Record<string, unknown>, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
 
-
         const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/acls/osg-acls`);
         const response = await this.request.post<OmadaApiResponse<unknown>>(path, data);
         return this.request.ensureSuccess(response);
     }
-
 
     /**
      * Create a new LAN network (v2 API).
@@ -1610,7 +1608,6 @@ export class NetworkOperations {
         return this.request.ensureSuccess(response);
     }
 
-
     /**
      * Create a new LAN profile (v1 API).
      */
@@ -1621,7 +1618,6 @@ export class NetworkOperations {
         return this.request.ensureSuccess(response);
     }
 
-
     /**
      * Delete a firewall ACL rule.
      * Uses the internal web UI API when web credentials are configured (required for OC200),
@@ -1630,12 +1626,10 @@ export class NetworkOperations {
     public async deleteFirewallAcl(aclId: string, siteId?: string): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
 
-
         const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/acls/${encodeURIComponent(aclId)}`);
         const response = await this.request.delete<OmadaApiResponse<unknown>>(path);
         return this.request.ensureSuccess(response);
     }
-
 
     /**
      * Delete a LAN network (v2 API).
@@ -1647,7 +1641,6 @@ export class NetworkOperations {
         return this.request.ensureSuccess(response);
     }
 
-
     /**
      * Update firewall settings for a site (v1 API).
      */
@@ -1657,7 +1650,6 @@ export class NetworkOperations {
         const response = await this.request.patch<OmadaApiResponse<unknown>>(path, data);
         return this.request.ensureSuccess(response);
     }
-
 
     /**
      * Update an existing LAN network (v2 API).
@@ -1669,7 +1661,6 @@ export class NetworkOperations {
         return this.request.ensureSuccess(response);
     }
 
-
     /**
      * Update an existing LAN profile (v1 API).
      */
@@ -1679,7 +1670,6 @@ export class NetworkOperations {
         const response = await this.request.patch<OmadaApiResponse<unknown>>(path, data);
         return this.request.ensureSuccess(response);
     }
-
 
     /**
      * Update a switch port configuration (v1 API).
@@ -1692,5 +1682,4 @@ export class NetworkOperations {
         const response = await this.request.request<OmadaApiResponse<unknown>>({ method: 'PATCH', url: path, data });
         return this.request.ensureSuccess(response);
     }
-
 }

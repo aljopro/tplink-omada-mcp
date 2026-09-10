@@ -300,5 +300,4 @@ export class RequestHandler {
     public async delete<T>(path: string, params?: Record<string, unknown>): Promise<T> {
         return await this.request<T>({ method: 'DELETE', url: path, params });
     }
-
 }

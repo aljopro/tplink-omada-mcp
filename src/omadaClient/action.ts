@@ -27,11 +27,7 @@ export class ActionOperations {
     /**
      * Adopt a device by MAC address (v1 API).
      */
-    public async adoptDevice(
-        deviceMac: string,
-        siteId?: string,
-        credentials?: { username?: string; password?: string }
-    ): Promise<unknown> {
+    public async adoptDevice(deviceMac: string, siteId?: string, credentials?: { username?: string; password?: string }): Promise<unknown> {
         const resolvedSiteId = this.site.resolveSiteId(siteId);
         const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/devices/${encodeURIComponent(deviceMac)}/start-adopt`);
         // AdoptDeviceRequest is { username?, password? } - the DEVICE account,
@@ -129,9 +125,7 @@ export class ActionOperations {
             // PATCH /sites/{siteId}/clients/{clientMac}/name  body: { name }
             // Name must be 1-128 chars, must not start with space + - @ = and
             // must not end with a space.
-            const path = this.buildPath(
-                `/sites/${encodeURIComponent(resolvedSiteId)}/clients/${encodeURIComponent(clientMac)}/name`
-            );
+            const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/clients/${encodeURIComponent(clientMac)}/name`);
             const response = await this.request.request<OmadaApiResponse<unknown>>({
                 method: 'PATCH',
                 url: path,
@@ -142,9 +136,7 @@ export class ActionOperations {
 
         if (rateLimitEnable !== undefined || upLimit !== undefined || downLimit !== undefined) {
             // PATCH /sites/{siteId}/clients/{clientMac}/ratelimit
-            const path = this.buildPath(
-                `/sites/${encodeURIComponent(resolvedSiteId)}/clients/${encodeURIComponent(clientMac)}/ratelimit`
-            );
+            const path = this.buildPath(`/sites/${encodeURIComponent(resolvedSiteId)}/clients/${encodeURIComponent(clientMac)}/ratelimit`);
             const response = await this.request.request<OmadaApiResponse<unknown>>({
                 method: 'PATCH',
                 url: path,
@@ -220,6 +212,4 @@ export class ActionOperations {
         const response = await this.request.post<OmadaApiResponse<unknown>>(path, {});
         return this.request.ensureSuccess(response);
     }
-
-
 }

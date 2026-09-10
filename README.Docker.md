@@ -501,6 +501,70 @@ In client-credentials mode the server already treats `Mcp-Session-Id` as optiona
 | `getPortSchedulePorts` | List ports with port schedule assignments for a site. |
 | `getRebootScheduleList` | List device reboot schedules for a site template. Requires `siteTemplateId`. |
 | `getUpgradeScheduleList` | List firmware upgrade schedules for a site. |
+
+### Write Operations
+
+These change controller state. Gate them with `OMADA_TOOL_CATEGORIES` suffixes (`:r` read-only, `:w` write-only, `:rw` both) — the default configuration exposes none of them.
+
+#### Device Actions
+
+| Tool | Description |
+|---|---|
+| `adoptDevice` | Adopt a pending device by its MAC address into the site. |
+| `rebootDevice` | Reboot a network device by its MAC address. |
+| `startFirmwareUpgrade` | Start a firmware upgrade for a device. Use getFirmwareDetails first to check for available updates. |
+| `setSiteLed` | Enable or disable status LEDs for every device on a site. The Omada Open API has no per-device LED control; this applies site-wide. |
+
+#### Client Actions
+
+| Tool | Description |
+|---|---|
+| `blockClient` | Block a client device by its MAC address, preventing it from accessing the network. |
+| `unblockClient` | Unblock a previously blocked client device by its MAC address, restoring network access. |
+| `reconnectClient` | Force a client to reconnect to the network by its MAC address. |
+| `updateClient` | Update client settings such as display name, static IP, and rate limits. |
+
+#### Switch Ports
+
+| Tool | Description |
+|---|---|
+| `setSwitchPortName` | Set the name of a single switch port (1-128 characters). |
+| `setSwitchPortPoe` | Enable or disable PoE on a single switch port. 1=on (802.3at/af), 0=off. |
+| `setSwitchPortProfile` | Assign a LAN profile to a single switch port. |
+| `setSwitchPortStatus` | Enable or disable a single switch port. 0=off, 1=on. |
+| `setSwitchPortProfileOverride` | Enable or disable profile override on a single switch port. |
+| `updateSwitchPort` | Update a switch port configuration (profile, PoE, speed, STP, isolation, etc.). |
+| `setSwitchNetworks` | Set switch networks / VLAN trunking configuration for a switch. |
+| `batchSetSwitchPortName` | Batch set names on multiple switch ports. Each entry specifies a port number and name (1-128 chars). |
+| `batchSetSwitchPortPoe` | Batch enable or disable PoE on multiple switch ports. 1=on (802.3at/af), 0=off. |
+| `batchSetSwitchPortProfile` | Batch enable or disable profile override on multiple switch ports. |
+| `batchSetSwitchPortStatus` | Batch enable or disable multiple switch ports. 0=off, 1=on. |
+| `startCableTest` | Start a cable test on a switch. Use getCableTestResults to retrieve results after completion. |
+
+#### LAN Networks & Profiles
+
+| Tool | Description |
+|---|---|
+| `createLanNetwork` | Create a new LAN network with VLAN, gateway/subnet, and DHCP settings. |
+| `updateLanNetwork` | Update an existing LAN network configuration including VLAN, gateway/subnet, and DHCP settings. |
+| `deleteLanNetwork` | Delete a LAN network by its network ID. |
+| `createLanProfile` | Create a new LAN profile with native/tagged network assignments and port settings. |
+| `updateLanProfile` | Update an existing LAN profile configuration including network assignments and port settings. |
+
+#### Firewall
+
+| Tool | Description |
+|---|---|
+| `createFirewallAcl` | Create a firewall ACL rule for inter-VLAN isolation or traffic control. Use listFirewallAcls first to see the expected rule shape. |
+| `deleteFirewallAcl` | Delete a firewall ACL rule by its ID. |
+| `updateFirewallSetting` | Update firewall settings for a site. Pass the same shape returned by getFirewallSetting (broadcastPing, sendRedirects, synCookies, etc.). |
+
+#### Escape Hatch
+
+| Tool | Description |
+|---|---|
+| `genericApiCall` | Execute an arbitrary Omada API call. Use this for any endpoint not covered by other tools. Path is relative (e.g. "/sites/{siteId}/setting/firewall/acls"). The omadacId prefix is added automatically. |
+
 ## Supported Omada API Operations
 
 | Operation ID                        | Description                                               | Tool                          |

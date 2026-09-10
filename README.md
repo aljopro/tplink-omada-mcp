@@ -6,7 +6,7 @@ This is [MiguelTVMS/tplink-omada-mcp](https://github.com/MiguelTVMS/tplink-omada
 `v0.15.0` with one addition: the **generic API escape hatch** ported from
 [realtydev/omada-mcp](https://github.com/realtydev/omada-mcp).
 
-**357 tools.** Everything upstream has, plus every write tool from realtydev.
+**356 tools.** Everything upstream has, plus every write tool from realtydev.
 
 ---
 
@@ -18,7 +18,7 @@ Two useful forks of the same project had diverged, and neither had everything:
 |---|---|---|---|
 | `MiguelTVMS/tplink-omada-mcp` **0.15.0** | 327 | yes | no |
 | `realtydev/omada-mcp` **0.5.5** | 63 | **no** | yes, plus 29 typed write tools |
-| **this repo** | **357** | yes | yes, all 30 |
+| **this repo** | **356** | yes | yes, all 30 |
 
 The realtydev fork branched at `0.5.5` and added write tools, but upstream moved on
 to `0.15.0` and added a large amount of read tooling the fork never got — the
@@ -150,17 +150,31 @@ follows the host regardless of what address it holds.
 
 ## What was ported, and what was not
 
-All 30 of realtydev's write tools are here:
+Of realtydev's 30 write tools, 28 ported across unchanged. One was replaced
+and one removed, because the Open API cannot express them — see *Two that
+could not port as-is* below.
 
 | Area | Tools |
 |---|---|
 | Clients | `updateClient` (rename, static IP, rate limits), `blockClient`, `unblockClient`, `reconnectClient` |
-| Devices | `adoptDevice`, `rebootDevice`, `setDeviceLed`, `startFirmwareUpgrade` |
+| Devices | `adoptDevice`, `rebootDevice`, `setSiteLed`, `startFirmwareUpgrade` |
 | Switch ports | `setSwitchPortName` / `Poe` / `Profile` / `Status`, `setSwitchPortProfileOverride`, `updateSwitchPort`, `setSwitchNetworks`, four `batchSet*` variants, `startCableTest` |
-| Gateway | `setGatewayWanConnect` |
 | Network | `createLanNetwork`, `updateLanNetwork`, `deleteLanNetwork`, `createLanProfile`, `updateLanProfile` |
 | Firewall | `createFirewallAcl`, `deleteFirewallAcl`, `updateFirewallSetting` |
 | Escape hatch | `genericApiCall` |
+
+### Two that could not port as-is
+
+<!-- check-readme-sync: allow setDeviceLed, setGatewayWanConnect (named here precisely because they no longer exist) -->
+
+- **`setDeviceLed` → `setSiteLed`.** The Open API has no per-device LED
+  endpoint. Only `PUT /sites/{siteId}/led` exists, and it applies to every
+  device on the site, so the tool is site-scoped and named accordingly. For
+  identifying one device, `POST /sites/{siteId}/devices/{mac}/locate` makes it
+  flash — a good first contribution if someone wants it.
+- **`setGatewayWanConnect` removed.** There is no Open API endpoint that
+  connects or disconnects a gateway WAN port. The fork's version pointed at a
+  path that does not exist, so it could only ever have returned 404.
 
 Two adaptations were needed:
 
@@ -174,9 +188,10 @@ Two adaptations were needed:
   the methods use the documented Open API path only. **If you manage ACLs on an
   OC200, use realtydev's fork instead.**
 
-Upstream's test suite passes: **2,108 tests green across 358 files**. The only edits
-were tool-count assertions (327 → 357, and the clients write-tool count 3 → 7),
-which moved because tools were added.
+The suite passes: **2,305 tests green across 390 files**. Porting itself only
+needed the tool-count assertions moved (327 → 356, and the clients write-tool
+count 3 → 7); the rest of the growth is test coverage added afterwards for the
+ported write tools, which arrived with none.
 
 ### A caution about write tools
 
