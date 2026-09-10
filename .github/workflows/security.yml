@@ -1,0 +1,107 @@
+name: Security
+
+# Three layers, each answering a different question:
+#   audit  - are our dependencies known-vulnerable?
+#   codeql - is our own code doing something unsafe?
+#   both run on a schedule, because an advisory can land against code that
+#   has not changed. A push-only trigger would never see it.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  schedule:
+    # Sundays 14:00 UTC (09:00 America/Chicago) - same slot as Dependabot,
+    # so the audit result and the fix PRs show up together.
+    - cron: "0 14 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      # npm ci fails outright if package.json and package-lock.json disagree,
+      # which also rules out a lockfile edited without resolving it.
+      - name: Install from lockfile
+        run: npm ci
+
+      # THE GATE. Runtime tree only.
+      #
+      # Deliberately --omit=dev. A total advisory count mixes two very
+      # different risks: a flaw in a package that ships inside the container
+      # and talks to the network controller, and a flaw in a test runner that
+      # only executes on a developer's laptop. Gating on the combined number
+      # means a Vitest UI advisory blocks a fix to the Omada client - so the
+      # gate gets ignored, and then it protects nothing.
+      #
+      # Scored 2026-09-10 as 0 critical / 6 high runtime while the combined
+      # count was 5 critical / 13 high. The 5 criticals were all dev-only.
+      - name: Audit runtime dependencies (blocking)
+        run: |
+          echo "::group::Runtime advisories"
+          npm audit --omit=dev --audit-level=high
+          echo "::endgroup::"
+
+      # Reported, not enforced. Worth seeing and worth fixing; not worth
+      # blocking a network fix over. Dependabot opens PRs for these anyway.
+      - name: Audit dev dependencies (informational)
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "::group::Full tree (dev included)"
+          npm audit || true
+          echo "::endgroup::"
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo "### Dependency audit"
+            echo
+            echo '| Tree | Advisories |'
+            echo '|------|------------|'
+            rt=$(npm audit --omit=dev --json 2>/dev/null \
+              | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const v=JSON.parse(s).metadata.vulnerabilities;console.log(v.critical+' critical, '+v.high+' high, '+v.moderate+' moderate')})")
+            all=$(npm audit --json 2>/dev/null \
+              | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const v=JSON.parse(s).metadata.vulnerabilities;console.log(v.critical+' critical, '+v.high+' high, '+v.moderate+' moderate')})")
+            echo "| Runtime (gated) | $rt |"
+            echo "| Full incl. dev | $all |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # security-and-quality is a superset of the default security queries.
+          # This codebase is small and the extra findings are readable.
+          queries: security-and-quality
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"

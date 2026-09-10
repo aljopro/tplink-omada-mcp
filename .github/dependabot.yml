@@ -1,0 +1,63 @@
+# Dependabot: GitHub's built-in equivalent of Renovate.
+# Scans on a schedule, opens PRs for outdated and vulnerable dependencies.
+#
+# This file controls *version* updates (routine "you're behind" bumps).
+# *Security* updates - PRs raised the moment an advisory lands, regardless of
+# schedule - are a repo setting, not a file: Settings > Advanced Security >
+# Dependabot security updates. Both are wanted; they are separate switches.
+#
+# Grouping rationale: dev-dependency bumps are noise-heavy and low-risk (they
+# never reach the published image), so they arrive as one PR. Runtime deps ship
+# to the container running on the household network and get individual PRs so
+# each one can be read on its own.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "09:00"
+      timezone: America/Chicago
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps(dev)"
+      include: scope
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        patterns: ["*"]
+    ignore:
+      # Majors on the MCP SDK change the protocol surface; those are a
+      # deliberate porting exercise, not a dependency bump.
+      - dependency-name: "@modelcontextprotocol/sdk"
+        update-types: ["version-update:semver-major"]
+
+  # Pinned action versions go stale silently and are a real supply-chain path.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "09:00"
+      timezone: America/Chicago
+    commit-message:
+      prefix: "ci"
+      include: scope
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # Tracks the node:24-bookworm-slim base image in the Dockerfile, which is
+  # where most image CVEs actually come from.
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: sunday
+      time: "09:00"
+      timezone: America/Chicago
+    commit-message:
+      prefix: "docker"
+      include: scope
